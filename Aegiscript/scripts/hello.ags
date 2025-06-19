@@ -1,2 +1,6 @@
-let name = "Anu"
-print ("Welcome " + name)
+let age = 28
+let name = "prithivi"
+
+print("My Name is " + name + " and my age is " + age)
+print( name  )
+print(age)

@@ -8,6 +8,7 @@ import java.util.HashMap;
 public class FileLoader {
 
     public static HashMap<String, String> stringVariables = new HashMap<>();
+    public static HashMap<String, Integer> integerVariables = new HashMap<>();
 
     public static void variables(String line){
         int start = line.indexOf(" ");
@@ -20,37 +21,85 @@ public class FileLoader {
         stringVariables.put(variableName, line.substring(start, end));
     }
 
+    public static void integerMethod(String line){
+        int start = line.indexOf(" ");
+        int end = line.indexOf("=") - 1;
+        String variableName = line.substring(start + 1, end).trim();
+
+        start = end + 2;
+        end = line.length();
+        int value = Integer.parseInt(line.substring(start, end).trim());
+
+        integerVariables.put(variableName, value);
+    }
+
+    public static void printVariable(String name){
+        if (stringVariables.containsKey(name))
+            System.out.print(stringVariables.get(name));
+
+        else if (integerVariables.containsKey(name))
+            System.out.print(integerVariables.get(name));
+
+        else
+            System.out.println("\n\n*** Variable Not Found ***");
+    }
+
     public static void print(String line){
 
-        // Printing with variable
-        if (line.contains("+")){
-            int start = line.indexOf("\"");
-            int end = line.lastIndexOf("\"");
-            System.out.print(line.substring(start + 1, end));
+        int i = 0;
+        boolean isValid = true;
 
-            String variableName;
-            start = line.indexOf("+");
-            end = line.indexOf(")");
-            variableName = line.substring(start + 1, end).trim();
-            System.out.println(stringVariables.getOrDefault(variableName, "Variable not found"));
-            return;
+        while (line.charAt(i) != '(')
+            i++;
+
+        // Check if the print is valid;
+        if (line.charAt(i) != '(')
+            isValid = false;
+        else
+            i++;
+
+        for(; i < line.length(); i++){
+            if (line.charAt(i) == '"'){
+                int end = line.indexOf("\"", i+1);
+                String value = line.substring(i+1, end);
+                System.out.print(value);
+                i = end;
+            }
+
+            else if (line.charAt(i) == '+'){
+                int end = line.indexOf("+", i+1);
+                if (end == -1)
+                    end = line.lastIndexOf(")");
+                String variableName = line.substring(i+1, end).trim();
+                printVariable(variableName);
+                i = end;
+            }
+
+            else if (line.charAt(i) == ')'){
+                isValid = true;
+                break;
+            }
+
+            else if (line.charAt(i) == ' ')
+                continue;
+
+            // Just variables to print
+            else {
+                int end = line.indexOf(" ", i+1);
+                if (end == -1) {
+                    end = i + 1;
+                    while (Character.isAlphabetic(line.charAt(end)))
+                        end++;
+                }
+                String variableName = line.substring(i, end).trim();
+                printVariable(variableName);
+                i = end;
+            }
         }
 
-        // Just a normal printing
-        if (line.contains("\"")) {
-            int start = line.indexOf("\"");
-            int end = line.lastIndexOf("\"");
-            System.out.println(line.substring(start + 1, end));
-            return;
-        }
-
-        // Printing variables
-        String variableName;
-        int start = line.indexOf("(") + 1;
-        int end = line.indexOf(")") - 1;
-        variableName = line.substring(start, end);
-        System.out.println(stringVariables.getOrDefault(variableName, "Variable not found"));
-
+        System.out.println();
+        if (!isValid)
+            System.out.println("\n\n*** Syntax Error ***");
     }
 
     public static void main(String[] args) throws IOException {
@@ -60,8 +109,16 @@ public class FileLoader {
             if (line.startsWith("print"))
                 print(line);
 
-            if (line.startsWith("let"))
-                variables(line);
+            if (line.startsWith("let")) {
+
+                // Separate Strings
+                if (line.contains("\""))
+                    variables(line);
+
+                // Separate Integers
+                else
+                    integerMethod(line);
+            }
         }
     }
 }
